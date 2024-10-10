@@ -1,0 +1,45 @@
+# Ignore build outputs
+bin/
+obj/
+
+# Ignore user-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vscode/
+
+# Ignore Mac files
+.DS_Store
+
+# Ignore Rider IDE project files
+.idea/
+
+# Ignore VSCode specific settings
+.vscode/
+.vs/
+
+# Ignore NuGet packages
+*.nupkg
+*.snupkg
+*.lock.json
+.nuget/
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Ignore log files
+*.log
+
+# Ignore publish output
+wwwroot/
+dist/
+
+# Ignore environment files
+appsettings.*.json
+secrets.json
+
+# Ignore .NET/EF/Migrations-related files
+migrations/
+migrations/**/*

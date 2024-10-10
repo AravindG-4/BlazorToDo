@@ -1,0 +1,176 @@
+﻿@page "/to-do"
+@rendermode InteractiveWebAssembly
+@using MongoAuth.Shared.Models
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Navigation
+
+<PageTitle>To-Do</PageTitle>
+
+<MudLayout>
+
+    <MudText Typo="Typo.h2">To-Do</MudText>
+    <MudText>Manage your tasks here</MudText>
+
+    <MudPaper Class="mt-6" Elevation="0">
+        <MudTextField Style="width:700px" Class="d-inline-flex" Label="Add Your New Task" Variant="Variant.Filled" @bind-Value="UserInput" Immediate="true" />
+        <MudButton Class="ml-5 mt-3 d-inline-flex" Variant="Variant.Filled" Color="Color.Primary" Disabled="@ButtonDisabled" OnClick="AddTask">Add Task</MudButton>
+    </MudPaper>
+
+    <MudText Typo="Typo.h5" Color="Color.Warning" Class="mt-6">Pending Tasks : @PendingToDos.Count</MudText>
+
+    @if (PendingToDos.Count == 0)
+    {
+        <MudText Class="mt-9" Style="text-align:center">No Pending Tasks</MudText>
+    }
+    else
+    {
+
+        <MudList T="string">
+            @foreach (var ToDo in PendingToDos)
+            {
+                <MudGrid Class="mt-0">
+                    <MudItem xs="7">
+                        <MudListItem Style="background-color: #f0f0f0" Text="@ToDo.Title" Icon="@Icons.Material.Filled.FlagCircle" Variant="Variant.Filled" />
+                    </MudItem>
+                    <MudItem xs="0">
+                        <MudIconButton Icon="@Icons.Material.Filled.Done" Color="Color.Success" OnClick="((e) => TaskDone(ToDo))" />
+                    </MudItem>
+                    <MudItem xs="0">
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" OnClick="((e) => TaskClose(ToDo))" />
+                    </MudItem>
+                </MudGrid>
+            }
+        </MudList>
+
+    }
+    <MudText Typo="Typo.h5" Color="Color.Warning" Class="mt-6">Completed Tasks : @CompletedToDos.Count</MudText>
+
+    @if (CompletedToDos.Count == 0)
+    {
+        <MudText Class="mt-9 mb-5" Style="text-align:center">No Tasks Completed</MudText>
+    }
+    else
+    {
+
+        <MudList T="string" Class="mb-5">
+            @foreach (var ToDo in CompletedToDos)
+            {
+                <MudGrid Class="mt-0">
+                    <MudItem xs="7">
+                        <MudListItem Style="background-color: #f0f0f0" Text="@ToDo.Title" Icon="@Icons.Material.Filled.DoneAll" Variant="Variant.Filled" />
+                    </MudItem>
+                    <MudItem xs="0">
+                        <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" OnClick="((e) => TaskClose(ToDo))" />
+                    </MudItem>
+                </MudGrid>
+            }
+        </MudList>
+
+    }
+
+</MudLayout>
+
+@code
+{
+
+    private HubConnection? hubConnection;
+    public string UserInput { get; set; }
+
+    private List<ToDo> PendingToDos = new List<ToDo>();
+    private List<ToDo> CompletedToDos = new List<ToDo>();
+    public bool ButtonDisabled => string.IsNullOrEmpty(UserInput);
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/mongoToDo"))
+            .Build();
+
+        hubConnection.On<string>("Created", async (Title) =>
+        {
+            Console.WriteLine($" Created : {Title}");
+            await LoadToDos();
+            InvokeAsync(StateHasChanged);
+        });
+        
+        hubConnection.On<string>("Removed", async (Title) =>
+        {
+            Console.WriteLine($" Removed : {Title}");
+            await LoadToDos();
+            InvokeAsync(StateHasChanged);
+        });
+        
+        hubConnection.On<string>("Completed", async (Title) =>
+        {
+            Console.WriteLine($" Completed : {Title}");
+            await LoadToDos();
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+        await LoadToDos();
+    }
+
+    private async Task LoadToDos()
+    {
+        try
+        {
+            if (hubConnection is not null)
+            {
+                Console.WriteLine("Read Pending and Completed ToDos");
+                PendingToDos = await hubConnection.InvokeAsync<List<ToDo>>("ListPending");
+                CompletedToDos = await hubConnection.InvokeAsync<List<ToDo>>("ListCompleted");
+            }
+            else
+            {
+                Console.WriteLine("Hub is not Connected");
+                PendingToDos = new List<ToDo>();
+                CompletedToDos = new List<ToDo>();
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            PendingToDos = new List<ToDo>();
+            CompletedToDos = new List<ToDo>();
+        }
+    }
+
+    private async Task AddTask()
+    {
+        // ToDo NewTask = new ToDo(UserInput);
+        // PendingToDos.Add(NewTask);
+        Console.WriteLine($"Title: {UserInput}");
+        DateOnly TaskAddedDate = DateOnly.FromDateTime(DateTime.Now);
+        try
+        {
+            if (hubConnection is not null)
+            {
+                await hubConnection.InvokeAsync("CreateToDo", UserInput, TaskAddedDate);
+                Console.WriteLine("Task created");
+                UserInput = string.Empty;
+            }
+            else
+                Console.WriteLine("Hub is not Connected");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+    }
+
+
+    private void TaskDone(ToDo task)
+    {
+        Console.WriteLine($"{task.Title} Done");
+        hubConnection.InvokeAsync("CompleteToDo", task);
+    }
+
+    private void TaskClose(ToDo task)
+    {
+        hubConnection.InvokeAsync("RemoveToDo", task);
+    }
+
+
+}

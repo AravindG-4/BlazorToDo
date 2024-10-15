@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoAuth", "MongoAuth\Mong
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoAuth.Client", "MongoAuth.Client\MongoAuth.Client.csproj", "{C39B9997-B3BA-4F14-B0B1-404E1AA644DC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoAuth.Shared", "MongoAuth.Shared\MongoAuth.Shared.csproj", "{8F71734E-7ACC-482C-85CD-DBC9CA4DC0AA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoAuth.Shared", "MongoAuth.Shared\MongoAuth.Shared.csproj", "{8F71734E-7ACC-482C-85CD-DBC9CA4DC0AA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2CA1A54A-6F1F-458F-A3D1-3FA809445814}"
 	ProjectSection(SolutionItems) = preProject

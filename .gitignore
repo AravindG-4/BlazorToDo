@@ -39,7 +39,7 @@ dist/
 # Ignore environment files
 appsettings.*.json
 secrets.json
-
+MongoAuth\appsettings.json
 # Ignore .NET/EF/Migrations-related files
 migrations/
 migrations/**/*

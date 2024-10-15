@@ -32,6 +32,8 @@ builder.Services.AddResponseCompression(opts =>
         ["application/octet-stream"]);
 });
 
+builder.Services.AddHttpClient();
+
 var app = builder.Build();
 
 app.UseResponseCompression();

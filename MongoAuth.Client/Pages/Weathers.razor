@@ -1,0 +1,139 @@
+﻿@page "/weathers"
+@inject HttpClient Http
+@rendermode InteractiveWebAssembly
+@inject IConfiguration Configuration
+
+<PageTitle>Weather</PageTitle>
+
+<MudContainer Class="mt-4">
+    <MudText Typo="Typo.h4">Weather Forecast</MudText>
+
+    <MudText Typo="Typo.body1" Class="mb-4">Get the 5-day weather forecast for any city.</MudText>
+
+    <MudTextField Label="Enter City" Variant="Variant.Filled" @bind-Value="city" Placeholder="e.g. New York" />
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" OnClick="GetWeatherData">Get Weather</MudButton>
+
+    @if (forecasts == null || !forecasts.Any())
+    {
+        <MudText Class="mt-4" Color="Color.Secondary"><em>No weather data available. Please enter a city name.</em></MudText>
+    }
+    else
+    {
+        <MudGrid Class="mt-4">
+            @foreach (var groupedForecast in forecasts.GroupBy(f => f.Date))
+            {
+                <MudItem xs="12" md="6" lg="4">
+                    <MudCard Class="mb-4">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h5">@groupedForecast.Key.ToShortDateString()</MudText>
+                            @foreach (var forecast in groupedForecast)
+                            {
+                                <MudDivider />
+                                <MudText>
+                                    <strong>Time:</strong> @forecast.Time <br />
+                                    <strong>Temperature:</strong> @forecast.TemperatureC °C <br />
+                                    <strong>Summary:</strong> @forecast.Summary
+                                </MudText>
+                            }
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    private List<WeatherForecast> forecasts = new List<WeatherForecast>();
+    private string? city;
+
+    private async Task GetWeatherData()
+    {
+        if (!string.IsNullOrWhiteSpace(city))
+        {
+            Console.WriteLine($"Fetching weather data for {city}...");
+
+            var forecastList = await FetchWeatherForecastAsync(city);
+            if (forecastList != null)
+            {
+                Console.WriteLine($"Received weather data for {city}");
+
+                // Add new forecast list
+                forecasts = forecastList;
+            }
+            else
+            {
+                Console.WriteLine($"No weather data received for {city}");
+            }
+        }
+        else
+        {
+            Console.WriteLine("City name is empty or invalid.");
+        }
+    }
+
+    private async Task<List<WeatherForecast>?> FetchWeatherForecastAsync(string cityName)
+    {
+        try
+        {
+            string apiKey = Configuration["OpenWeather:API_KEY"];
+            var url = $"https://api.openweathermap.org/data/2.5/forecast?q={cityName}&appid={apiKey}&units=metric";
+            Console.WriteLine($"Sending request to: {url}");
+
+            var response = await Http.GetFromJsonAsync<OpenWeatherResponse>(url);
+
+            if (response != null && response.List.Any())
+            {
+                return response.List.Select(item =>
+                {
+                    var dateTime = DateTimeOffset.FromUnixTimeSeconds(item.Dt).DateTime;
+
+                    return new WeatherForecast
+                        {
+                            Date = dateTime.Date,
+                            Time = dateTime.ToString("HH:mm"),
+                            TemperatureC = (int)item.Main.Temp,
+                            Summary = item.Weather.FirstOrDefault()?.Description ?? "No description"
+                        };
+                }).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching weather data: {ex.Message}");
+        }
+
+        return null;
+    }
+
+    private class WeatherForecast
+    {
+        public DateTime Date { get; set; }
+        public string? Time { get; set; }
+        public int TemperatureC { get; set; }
+        public string? Summary { get; set; }
+    }
+
+    private class OpenWeatherResponse
+    {
+        public List<WeatherItem> List { get; set; } = new List<WeatherItem>();
+    }
+
+    private class WeatherItem
+    {
+        public long Dt { get; set; } // Unix timestamp
+        public Main Main { get; set; } = new Main();
+        public List<WeatherDescription> Weather { get; set; } = new List<WeatherDescription>();
+    }
+
+    private class Main
+    {
+        public float Temp { get; set; }
+    }
+
+    private class WeatherDescription
+    {
+        public string Description { get; set; } = string.Empty;
+    }
+}

@@ -7,10 +7,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Services\JWTToken.cs" />
+    <Compile Remove="Services\LoginViewModel.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Session" Version="2.2.0" />
     <ProjectReference Include="..\MongoAuth.Client\MongoAuth.Client.csproj" />
     <ProjectReference Include="..\MongoAuth.Shared\MongoAuth.Shared.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.8" />
-    <PackageReference Include="MongoDB.Driver" Version="2.29.0" />
+    <PackageReference Include="MongoDB.Driver" Version="3.0.0" />
     <PackageReference Include="MudBlazor" Version="7.8.0" />
   </ItemGroup>
 

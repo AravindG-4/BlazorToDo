@@ -1,4 +1,4 @@
-﻿@page "/weathers"
+﻿@page "/weather"
 @inject HttpClient Http
 @rendermode InteractiveWebAssembly
 @inject IConfiguration Configuration
@@ -20,6 +20,8 @@
     }
     else
     {
+        <MudText Class="mt-4" Color="Color.Success"><em>Got Weather info of @city for next 5 days.</em></MudText>
+
         <MudGrid Class="mt-4">
             @foreach (var groupedForecast in forecasts.GroupBy(f => f.Date))
             {

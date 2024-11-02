@@ -1,12 +1,16 @@
-using MongoAuth.Client.Pages;
 using MongoAuth.Components;
 using MudBlazor.Services;
 using Microsoft.AspNetCore.ResponseCompression;
 using MongoAuth.Hubs;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using MongoAuth.Services;
 using MongoDB.Driver;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using MongoAuth.Shared.Models;
+//using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,13 +20,14 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
 builder.Services.AddMudServices();
+builder.Services.AddControllers();
 builder.Services.AddSingleton(sp =>
 {
     var configuration = sp.GetRequiredService<IConfiguration>();
-    var mongoConnectionString = configuration["MongoDB:TODO:URL"];
+    var mongoConnectionString = configuration["MongoDB:URL"];
     return new MongoClient(mongoConnectionString);
 });
-builder.Services.AddSingleton<MongoToDoService>();
+builder.Services.AddSingleton<MongoDBService>();
 
 builder.Services.AddSignalR();
 
@@ -33,6 +38,39 @@ builder.Services.AddResponseCompression(opts =>
 });
 
 builder.Services.AddHttpClient();
+
+var jwtKey = builder.Configuration["Jwt:Key"];
+var key = Encoding.ASCII.GetBytes(jwtKey);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"]
+    };
+});
+
+builder.Services.AddDistributedMemoryCache();
+
+// Enable sessions
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 var app = builder.Build();
 
@@ -54,6 +92,19 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
+app.UseRouting();
+app.UseSession();
+
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseAntiforgery();
+
+//app.MapRazorComponents();
+app.MapControllers();
+
+
+//app.UseAuthentication();
+//app.UseAuthorization();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()

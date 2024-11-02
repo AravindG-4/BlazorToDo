@@ -10,10 +10,10 @@ namespace MongoAuth.Hubs
 {
     public class ToDoHub : Hub
     {
-        private readonly MongoToDoService _mongoToDoService;
+        private readonly MongoDBService _mongoToDoService;
         //private IConfiguration configuration;
 
-        public ToDoHub(MongoToDoService mongoToDoService)
+        public ToDoHub(MongoDBService mongoToDoService)
         {
             _mongoToDoService = mongoToDoService;
         }
@@ -22,13 +22,13 @@ namespace MongoAuth.Hubs
         {
             return await _mongoToDoService.ReadPending();
         }
-        
+
         public async Task<List<ToDo>> ListCompleted()
         {
             return await _mongoToDoService.ReadCompleted();
         }
 
-        public async Task CreateToDo(string Title, DateOnly? TaskAddedDate)
+        public async Task CreateToDo(string Title, DateTime? TaskAddedDate)
         {
             ToDo task = new ToDo()
             {

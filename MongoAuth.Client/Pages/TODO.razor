@@ -93,14 +93,14 @@
             await LoadToDos();
             InvokeAsync(StateHasChanged);
         });
-        
+
         hubConnection.On<string>("Removed", async (Title) =>
         {
             Console.WriteLine($" Removed : {Title}");
             await LoadToDos();
             InvokeAsync(StateHasChanged);
         });
-        
+
         hubConnection.On<string>("Completed", async (Title) =>
         {
             Console.WriteLine($" Completed : {Title}");
@@ -142,7 +142,7 @@
         // ToDo NewTask = new ToDo(UserInput);
         // PendingToDos.Add(NewTask);
         Console.WriteLine($"Title: {UserInput}");
-        DateOnly TaskAddedDate = DateOnly.FromDateTime(DateTime.Now);
+        DateTime TaskAddedDate = DateTime.Now;
         try
         {
             if (hubConnection is not null)

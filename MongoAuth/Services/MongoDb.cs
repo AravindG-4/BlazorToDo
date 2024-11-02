@@ -5,14 +5,14 @@ using MongoDB.Bson;
 
 namespace MongoAuth.Services
 {
-    public class MongoToDoService
+    public class MongoDBService
     {
         private readonly IMongoCollection<ToDo> _usersCollection;
 
-        public MongoToDoService(IConfiguration configuration)
+        public MongoDBService(IConfiguration configuration)
         {
-            var MongoUrl = configuration["MongoDB:TODO:URL"]; 
-            var DatabaseName = configuration["MongoDB:TODO:DBNAME"]; 
+            var MongoUrl = configuration["MongoDB:URL"];
+            var DatabaseName = configuration["MongoDB:DBNAME"];
             var CollectionName = configuration["MongoDB:TODO:COLLECTION"];
 
             Console.WriteLine("Service Constructor");
@@ -34,7 +34,7 @@ namespace MongoAuth.Services
             var Tasks = await _usersCollection.Find(task => task.Completed == false).ToListAsync();
             return Tasks;
         }
-        
+
         public async Task<List<ToDo>> ReadCompleted()
         {
             var Tasks = await _usersCollection.Find(task => task.Completed == true).ToListAsync();
@@ -50,7 +50,9 @@ namespace MongoAuth.Services
         {
             var id = task.Id;
             var filter = Builders<ToDo>.Filter.Eq(task => task.Id, id);
-            var update = Builders<ToDo>.Update.Set(task => task.Completed, true);
+            var update = Builders<ToDo>.Update
+                .Set(task => task.Completed, true)
+                .Set(task => task.TaskCompletedDate, DateTime.Now);
 
             await _usersCollection.UpdateOneAsync(filter, update);
         }
